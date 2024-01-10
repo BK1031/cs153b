@@ -47,6 +47,13 @@ int main(void){
     // Polling to Check for User Button Presses
     while (1) {
         if (GPIOC -> IDR & GPIO_IDR_ID13 == 0) {
+            // Debounce the button, basically wait for the button to appear as pressed again within
+            // 10 cycles to prevent multiple presses or noise from being registered
+            for (int i = 0; i < 10; i++) {
+                if (GPIOC -> IDR & GPIO_IDR_ID13 != 0) {
+                    i++;
+                }
+            }
             GPIOA -> ODR ^= GPIO_ODR_OD5;
 	    }
     }
