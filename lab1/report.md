@@ -70,12 +70,12 @@ int main(void){
 
 **What should my mask be if I want to clear the mode bits of pin PB11?**
 
-`GPIOB -> MODER &= ~(uint32_t)(GPIO_MODER_MODE11_0 | GPIO_MODER_MODE11_1);`
+`~(3UL << 22)`
 
 ## Q2
 **Write the line of code you would use to set PC7 to output mode (Assume the output register is already cleared for you)**
 
-`GPIOC -> MODER |= (uint32_t)GPIO_MODER_MODE7_0;`
+`GPIOC -> MODER |= 1UL << 14;`
 
 ## Q3
 **Write the line of code you would use to read input data from PC3**
