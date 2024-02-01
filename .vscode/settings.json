@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "stm32l476xx.h": "c",
+        "systimer.h": "c"
+    }
+}
