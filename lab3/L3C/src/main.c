@@ -24,7 +24,25 @@ void TIM4_IRQHandler(void) {
 }
 
 void Trigger_Setup() {
-	// [TODO]
+    // (a) Enable the clock for GPIO Port A
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+    
+    // (b) Configure PA9 to be used as alternative function TIM1 CH2
+    GPIOA->MODER &= ~(GPIO_MODER_MODE9);
+    GPIOA->MODER |= GPIO_MODER_MODE9_AF;
+    
+    // Set the alternative function type to TIM1_CH2 (AF1)
+    GPIOA->AFR[1] &= ~(GPIO_AFRH_AFSEL9);
+    GPIOA->AFR[1] |= GPIO_AFRH_AFSEL9_AF1;
+    
+    // (c) Set PA9 to no pull-up, no pull-down
+    GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD9);
+    
+    // (d) Set the output type of PA9 to push-pull
+    GPIOA->OTYPER &= ~(GPIO_OTYPER_OT_9);
+    
+    // (e) Set PA9 to very high output speed
+    GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR9; // Set to very high speed
 }
 
 int main(void) {	
