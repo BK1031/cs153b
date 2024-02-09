@@ -14,12 +14,9 @@ void SERVO_Pin_Init(void);
 void TIM5_CH1_Init(void);
 
 void LED_Pin_Init(void){
-  // Enable GPIO Clocks
-  RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
-  RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
-	// Initialize Green LED       todo:?
-	//???
-
+	// Enable GPIO Clocks
+  	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+	RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
 
 	// GPIO Mode
 	// Alternative Function (10)
@@ -29,7 +26,6 @@ void LED_Pin_Init(void){
 	//Set I/O output speed value as very high speed (11)
 	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED5_0;
 	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED5_1;
-	
 
 	// GPIO Push-Pull: No pull-up, no pull-down (00)
 	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD5_0;
@@ -38,7 +34,6 @@ void LED_Pin_Init(void){
 	//configure an select the alt f'n for PA5 (0001 for AF1 - timer 2 channel 1 af)
 	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL5; //reset
 	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL5_0; //set to 0001
-
 }
 	
 
@@ -46,21 +41,19 @@ void TIM2_CH1_Init(void){
 	// Enable the timer clock
 	// Counting direction: 0 = up-counting, 1 = down-counting
 	TIM2->CR1 &= ~TIM_CR1_DIR; //bit set to 0
-	
 
-
-  // Prescaler
+	// Prescaler
 	TIM2->PSC = 39;
 	TIM2->ARR = 1999;
 
-	//clear output compare mode bits and set bits to PWM mode 1 (0110)
+	// clear output compare mode bits and set bits to PWM mode 1 (0110)
 	TIM2->CCMR1 &= ~TIM_CCMR1_OC1M; //clear output compare mode bits
 	TIM2->CCMR1 |= TIM_CCMR1_OC1M_2;
 	TIM2->CCMR1 |= TIM_CCMR1_OC1M_1;
-	//enable output preload
+	// enable output preload
 	TIM2->CCMR1 |= TIM_CCMR1_OC1PE;
 
-  // Enable output for ch1
+	// Enable output for ch1
 	TIM2->CCER |= TIM_CCER_CC1P; // Output Compare Register for channel 1 
 	TIM2->CCER |= TIM_CCER_CC1E; //enable  channel 1 output
 
@@ -80,7 +73,6 @@ void SERVO_Pin_Init(void){
 	//Set I/O output speed value as very high speed (11)
 	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED0_0;
 	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED0_1;
-	
 
 	// GPIO Push-Pull: No pull-up, no pull-down (00)
 	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD0_0;
