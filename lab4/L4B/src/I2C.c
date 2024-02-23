@@ -73,42 +73,42 @@ void I2C_Initialization(void) {
 	RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_I2C1RST;
 
 	// step 2 stuff
-	I2C->CR1 &= ~I2C_CR1_PE; 
+	I2C1->CR1 &= ~I2C_CR1_PE; 
 
 	// (a) Enable the analog noise filter, disable the digital noise filter, enable error interrupts,
 	// and enable clock stretching. Set the master to operate in 7-bit addressing mode.
 	// Enable automatic end mode and NACK generation. (These settings are all in the
 	// control registers.)
-	I2C->CR1 &= ~I2C_CR1_ANFOFF;
-	I2C->CR1 &= ~I2C_CR1_DNF;
-	I2C->CR1 |= I2C_CR1_ERRIE;	
-	I2C->CR1 &= ~I2C_CR1_NOSTRETCH;
+	I2C1->CR1 &= ~I2C_CR1_ANFOFF;
+	I2C1->CR1 &= ~I2C_CR1_DNF;
+	I2C1->CR1 |= I2C_CR1_ERRIE;	
+	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;
 
-	I2C->CR2 &= ~I2C_CR2_ADD10;
-	I2C->CR2 |= I2C_CR2_AUTOEND;
-	I2C->CR2 |= I2C_CR2_NACK;
+	I2C1->CR2 &= ~I2C_CR2_ADD10;
+	I2C1->CR2 |= I2C_CR2_AUTOEND;
+	I2C1->CR2 |= I2C_CR2_NACK;
 
 	// (b) Set the values in the timing register. This guarantees correct data hold and setup
 	// times that are used in master/peripheral modes. The timing register stores several
 	// values: presc, scldel, sdadel, sclh, scll
-	I2C->TIMINGR = 7;
-	I2C->SCLDEL = 10;
-	I2C->SDADEL = 12;
-	I2C->SCLH = 40;
-	I2C->SCLL = 47;
+	I2C1->TIMINGR = 7;
+	I2C1->SCLDEL = 10;
+	I2C1->SDADEL = 12;
+	I2C1->SCLH = 40;
+	I2C1->SCLL = 47;
 
 	// 	c) Set your own address in the own address registers. To modify the address, you must
 	// first disable the own address. Do this for only Own Address 1 – we do not need Own
 	// Address 2 (ensure that it remains disabled).
-	I2C->OAR1 &= ~I2C_OAR1_OA1EN;
-	I2C->OAR2 &= ~I2C_OAR2_OA2EN;
-	I2C->OAR1 &= ~I2C_OAR1_OA1MODE;
+	I2C1->OAR1 &= ~I2C_OAR1_OA1EN;
+	I2C1->OAR2 &= ~I2C_OAR2_OA2EN;
+	I2C1->OAR1 &= ~I2C_OAR1_OA1MODE;
 
-	I2C->OAR1 |= OwnAddr << 1;
-	I2C->OAR1 |= I2C_OAR1_OA1EN;
+	I2C1->OAR1 |= OwnAddr << 1;
+	I2C1->OAR1 |= I2C_OAR1_OA1EN;
 
 	// d) Enable I2C in the control register.
-	I2C->CR1 |= I2C_CR1_PE;
+	I2C1->CR1 |= I2C_CR1_PE;
 }
 
 //===============================================================================

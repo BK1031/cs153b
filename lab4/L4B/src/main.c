@@ -43,19 +43,21 @@ int main(void) {
 	uint8_t SecondaryAddress;
 	uint8_t Data_Receive;
 	uint8_t Data_Send;
+	printf("Connected!");
 	while(1) {
 		// Determine Secondary Address
 		//
 		// Note the "<< 1" must be present because bit 0 is treated as a don't care in 7-bit addressing mode
-		SecondaryAddress = 0b1111111 << 1; // STUB - Fill in correct address 
+		SecondaryAddress = 0b1001000 << 1; // STUB - Fill in correct address
 		
-		// [TODO] - Get Temperature
-		// 
 		// First, send a command to the sensor for reading the temperature
-
+		Data_Send = 0x00; // Command byte for Read Temperature in TC74
+		I2C_SendData(I2C1, SecondaryAddress, &Data_Send, 1);
 		// Next, get the measurement
+		I2C_ReceiveData(I2C1, SecondaryAddress, &Data_Receive, 1);
 		
-		// [TODO] - Print Temperature to Termite
+		// Print Temperature to Termite
+		printf("%d\n", Data_Receive);
 		
 		// Some delay
 		for(i = 0; i < 50000; ++i); 
