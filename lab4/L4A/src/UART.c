@@ -1,5 +1,54 @@
 #include "UART.h"
 
+void UART2_Init(void) {
+	// Enable USART2 clock
+	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+	
+	// Set USART2 clock source to system clock (01)
+	RCC->CCIPR &= ~RCC_CCIPR_USART2SEL_1;
+	RCC->CCIPR |= RCC_CCIPR_USART2SEL_0;
+}
+
+void UART2_GPIO_Init(void) {
+	// AF7 of PA2 is USART2_TX
+	// AF7 of PA3 is USART2_RX
+	
+	// Set PA2 mode to alternative function (10)
+	GPIOA->MODER |= GPIO_MODER_MODE2_1;
+	GPIOA->MODER &= ~GPIO_MODER_MODE2_0;
+	// Set PA3 mode to alternative function (10)
+	GPIOA->MODER |= GPIO_MODER_MODE3_1;
+	GPIOA->MODER &= ~GPIO_MODER_MODE3_0;
+	
+	// Set PA2 alternative function to AF7 (0111) (USART2_TX)
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL2_3;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_2;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_0;
+	// Set PA3 alternative function to AF7 (0111) (USART2_RX)
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL3_3;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_2;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_1;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
+	
+	// Set PA2 I/O output speed to high speed (11)
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED2;
+	// Set PA3 I/O output speed to high speed (11)
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED3;
+	
+	// Set PA2 output type to push-pull (0)
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT2;
+	// Set PA3 output type to push-pull (0)
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;
+	
+	// Set PA2 PUPD to pull-up (01)
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD2_1;
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD2_0;
+	// Set PA3 PUPD to pull-up (01)
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3_1;
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD3_0;
+}
+
 void UART1_Init(void) {
 	// Enable USART1 clock
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -50,55 +99,6 @@ void UART1_GPIO_Init(void) {
 	// Set PB7 PUPD to pull-up (01)
 	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD7_1;
 	GPIOB->PUPDR |= GPIO_PUPDR_PUPD7_0;
-}
-
-void UART2_Init(void) {
-	// Enable USART2 clock
-	RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-	
-	// Set USART2 clock source to system clock (01)
-	RCC->CCIPR &= ~RCC_CCIPR_USART2SEL_1;
-	RCC->CCIPR |= RCC_CCIPR_USART2SEL_0;
-}
-
-void UART2_GPIO_Init(void) {
-	// AF7 of PA2 is USART2_TX
-	// AF7 of PA3 is USART2_RX
-	
-	// Set PA2 mode to alternative function (10)
-	GPIOA->MODER |= GPIO_MODER_MODE2_1;
-	GPIOA->MODER &= ~GPIO_MODER_MODE2_0;
-	// Set PA3 mode to alternative function (10)
-	GPIOA->MODER |= GPIO_MODER_MODE3_1;
-	GPIOA->MODER &= ~GPIO_MODER_MODE3_0;
-	
-	// Set PA2 alternative function to AF7 (0111) (USART2_TX)
-	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL2_3;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_2;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_1;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2_0;
-	// Set PA3 alternative function to AF7 (0111) (USART2_RX)
-	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL3_3;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_2;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_1;
-	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3_0;
-	
-	// Set PA2 I/O output speed to high speed (11)
-	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED2;
-	// Set PA3 I/O output speed to high speed (11)
-	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED3;
-	
-	// Set PA2 output type to push-pull (0)
-	GPIOA->OTYPER &= ~GPIO_OTYPER_OT2;
-	// Set PA3 output type to push-pull (0)
-	GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;
-	
-	// Set PA2 PUPD to pull-up (01)
-	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD2_1;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPD2_0;
-	// Set PA3 PUPD to pull-up (01)
-	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3_1;
-	GPIOA->PUPDR |= GPIO_PUPDR_PUPD3_0;
 }
 
 void USART_Init(USART_TypeDef* USARTx) {

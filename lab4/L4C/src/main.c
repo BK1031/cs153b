@@ -27,6 +27,7 @@ int main(void){
 	SPI1_GPIO_Init();
 	SPI1_Init();
 	initAcc();
+	printf("Connected!");
 	
 	while(1) {
 		readValues(&x, &y, &z);

@@ -13,6 +13,9 @@ void UART2_GPIO_Init(void) {
 	// AF7 of PA2 is USART2_TX
 	// AF7 of PA3 is USART2_RX
 	
+	// GPIO A clock enable
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+	
 	// Set PA2 mode to alternative function (10)
 	GPIOA->MODER |= GPIO_MODER_MODE2_1;
 	GPIOA->MODER &= ~GPIO_MODER_MODE2_0;

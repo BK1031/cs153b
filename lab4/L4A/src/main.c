@@ -37,6 +37,7 @@ int main(void) {
 	
 	// Initialize UART -- change the argument depending on the part you are working on
 	Init_USARTx(2);
+	printf("Connected!");
 	
 	char rxByte;
 	while(1) {
