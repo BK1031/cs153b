@@ -94,11 +94,17 @@ void I2C_Initialization(void) {
 	// (b) Set the values in the timing register. This guarantees correct data hold and setup
 	// times that are used in master/peripheral modes. The timing register stores several
 	// values: presc, scldel, sdadel, sclh, scll
-	I2C1->TIMINGR = 7;
-	I2C1->SCLDEL = 10;
-	I2C1->SDADEL = 12;
-	I2C1->SCLH = 40;
-	I2C1->SCLL = 47;
+	#define TIMINGR_PRESC		7
+	#define TIMINGR_SCLDEL	15 // Max
+	#define TIMINGR_SDADEL	15 // Max
+	#define TIMINGR_SCLH		49
+	#define TIMINGR_SCLL		56
+
+	I2C1->TIMINGR |= TIMINGR_PRESC<<I2C_TIMINGR_PRESC_POS;
+	I2C1->TIMINGR |= TIMINGR_SCLDEL<<I2C_TIMINGR_SCLDEL_POS;
+	I2C1->TIMINGR |= TIMINGR_SDADEL<<I2C_TIMINGR_SDADEL_POS;
+	I2C1->TIMINGR |= TIMINGR_SCLH<<I2C_TIMINGR_SCLH_POS;
+	I2C1->TIMINGR |= TIMINGR_SCLL<<I2C_TIMINGR_SCLL_POS;
 
 	// 	c) Set your own address in the own address registers. To modify the address, you must
 	// first disable the own address. Do this for only Own Address 1 – we do not need Own
