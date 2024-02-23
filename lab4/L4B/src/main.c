@@ -48,7 +48,7 @@ int main(void) {
 		// Determine Secondary Address
 		//
 		// Note the "<< 1" must be present because bit 0 is treated as a don't care in 7-bit addressing mode
-		SecondaryAddress = 0b1001000 << 1; // STUB - Fill in correct address
+		SecondaryAddress = 0b1001000 << 1;
 		
 		// First, send a command to the sensor for reading the temperature
 		Data_Send = 0x00; // Command byte for Read Temperature in TC74
@@ -57,7 +57,7 @@ int main(void) {
 		I2C_ReceiveData(I2C1, SecondaryAddress, &Data_Receive, 1);
 		
 		// Print Temperature to Termite
-		printf("%d\n", Data_Receive);
+		printf("Temp: %dC\n",Data_Receive);
 		
 		// Some delay
 		for(i = 0; i < 50000; ++i); 

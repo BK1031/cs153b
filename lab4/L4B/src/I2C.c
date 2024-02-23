@@ -64,8 +64,11 @@ void I2C_Initialization(void) {
 
 	// (b) Set the system clock as the clock source for I2C1 in the peripherals independent clock
 	// configuration register.
-	RCC->APB1ENR1 &= ~RCC_CCIPR_I2C1SEL;
-	RCC->CCIPR |= RCC_CCIPR_I2C1SEL_1;
+	RCC->CCIPR &= ~RCC_CCIPR_I2C1SEL;
+	RCC->CCIPR |= RCC_CCIPR_I2C1SEL_0;
+
+	// RCC->APB1ENR1 &= ~RCC_CCIPR_I2C1SEL;
+	// RCC->CCIPR |= RCC_CCIPR_I2C1SEL_1;
 	
 	// (c) Reset I2C1 by setting bits in the peripheral reset register. After doing so, clear the
 	// bits so that I2C1 does not remain in a reset state
