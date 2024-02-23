@@ -17,7 +17,7 @@ extern void Error_Handler(void);
 //===============================================================================
 void I2C_GPIO_Init(void) {
 	// enable clock for port B
-	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
 
     // (0) set to alternative mode for both pins (10)
     GPIOB->MODER &= ~GPIO_MODER_MODE6;
@@ -64,8 +64,8 @@ void I2C_Initialization(void) {
 
 	// (b) Set the system clock as the clock source for I2C1 in the peripherals independent clock
 	// configuration register.
-	RCC->CCIPR |= RCC_CCIPR_I2C1SEL_0;
-	RCC->CCIPR &= ~RCC_CCIPR_I2C1SEL_1;
+	RCC->APB1ENR1 &= ~RCC_CCIPR_I2C1SEL;
+	RCC->CCIPR |= RCC_CCIPR_I2C1SEL_1;
 	
 	// (c) Reset I2C1 by setting bits in the peripheral reset register. After doing so, clear the
 	// bits so that I2C1 does not remain in a reset state
@@ -87,7 +87,7 @@ void I2C_Initialization(void) {
 	I2C->CR2 &= ~I2C_CR2_ADD10;
 	I2C->CR2 |= I2C_CR2_AUTOEND;
 	I2C->CR2 |= I2C_CR2_NACK;
-	
+
 	// (b) Set the values in the timing register. This guarantees correct data hold and setup
 	// times that are used in master/peripheral modes. The timing register stores several
 	// values: presc, scldel, sdadel, sclh, scll
@@ -101,12 +101,14 @@ void I2C_Initialization(void) {
 	// first disable the own address. Do this for only Own Address 1 – we do not need Own
 	// Address 2 (ensure that it remains disabled).
 	I2C->OAR1 &= ~I2C_OAR1_OA1EN;
+	I2C->OAR2 &= ~I2C_OAR2_OA2EN;
 	I2C->OAR1 &= ~I2C_OAR1_OA1MODE;
-	I2C->OAR1 = OwnAddr; //DC THIS
+
+	I2C->OAR1 |= OwnAddr << 1;
 	I2C->OAR1 |= I2C_OAR1_OA1EN;
 
 	// d) Enable I2C in the control register.
-	I2C->CR1 |= I2C_CR1_PE; 
+	I2C->CR1 |= I2C_CR1_PE;
 }
 
 //===============================================================================
