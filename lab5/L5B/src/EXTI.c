@@ -7,10 +7,17 @@ void EXTI_Init(void) {
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
 	
 	/* Initialize User Button (PC13) */
-  // Set mode of PC13 to input (00)
-	GPIOC->MODER &= ~GPIO_MODER_MODE13;
-	// Set PUPD of PC13 to no pull-up/pull-down (00)
-	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD13;
+  	// // Set mode of PC13 to input (00)
+	// GPIOC->MODER &= ~GPIO_MODER_MODE13;
+	// // Set PUPD of PC13 to no pull-up/pull-down (00)
+	// GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD13;
+
+	// Set Mode to Input (00)
+    GPIOC -> MODER &= ~(uint32_t)GPIO_MODER_MODE13_0;
+	GPIOC -> MODER &= ~(uint32_t)GPIO_MODER_MODE13_1;
+    // Set PUPD Type to Pull-Down (10)
+    GPIOC -> PUPDR &= ~(uint32_t)GPIO_PUPDR_PUPD13_0;
+    GPIOC -> PUPDR &= (uint32_t)GPIO_PUPDR_PUPD13_1;
 	
 	/* Configure SYSCFG EXTI */
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;

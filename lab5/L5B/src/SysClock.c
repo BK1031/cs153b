@@ -1,6 +1,6 @@
 #include "SysClock.h"
 
-void System_Clock_Init(void) {	
+void System_Clock_Init(void) {
 	// Select MSI as system clock source (8 MHz)
 	RCC->CFGR &= ~RCC_CFGR_SW;
 	RCC->CFGR |= RCC_CFGR_SW_MSI;
