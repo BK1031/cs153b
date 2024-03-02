@@ -1,8 +1,8 @@
 /*
  * ECE 153B
  *
- * Name(s): 
- * Section:
+ * Name(s): Tien Nguyen
+ * Section: Wednesday 7pm
  * Lab: 5B
  */
 
@@ -23,6 +23,7 @@ int main(void) {
     ADC_Init();
     DAC_Init();
 
+		// PWM-controlled LED init
     LED_Pin_Init();
     TIM2_CH1_Init();
 	
@@ -39,9 +40,7 @@ int main(void) {
         data = ADC1->DR;
 			
         // LED duty cycle proportional to ADC value (0-4095)
-        if (data > 4095) {
-            data = 4095;
-        }
+        if (data > 4095) data = 4095;
         TIM2->CCR1 = data;
     }
 }
