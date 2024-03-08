@@ -13,7 +13,15 @@ void UART1_Init(void) {
 }
 
 void UART2_Init(void) {
-	//TODO
+	// (a) Enable the USART2 clock in the peripheral clock register.
+    RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;      
+
+
+    // (b) Select the system clock as the USART2 clock source in the peripheral independent clock configuration register.
+    // RCC->CCIPR &= ~RCC_CCIPR_USART2SEL;
+    // RCC->CCIPR |= RCC_CCIPR_USART2SEL_0;
+	RCC -> CFGR &= ~RCC_CFGR_MCOSEL;
+	RCC -> CFGR |= RCC_CFGR_MCOSEL_0;
 }
 
 void UART1_GPIO_Init(void) {
@@ -21,11 +29,62 @@ void UART1_GPIO_Init(void) {
 }
 
 void UART2_GPIO_Init(void) {
-	// TODO
+	//PA2 and PA3 operate as UART transmitters and recievers
+	//Enable clock for GPIO port A
+    RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
+
+	// (0) set to alternative mode for both pins (10)
+	GPIOA->MODER |= GPIO_MODER_MODE2_1;
+	GPIOA->MODER &= ~GPIO_MODER_MODE2_0;
+	GPIOA->MODER |= GPIO_MODER_MODE3_1;
+	GPIOA->MODER &= ~GPIO_MODER_MODE3_0;
+
+	// (02) set PA2 and PA3 to AF7 (USART2_TX and USART2_RX respectively)
+	//AFR[0] bc pins 2,3 are in AFR[0] range of 0 to 7
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL2;
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL2_3;
+	GPIOA->AFR[0] |= GPIO_AFRL_AFSEL3;
+	GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL3_3;
+	
+
+	// 	(a) Both GPIO pins should operate at very high speed.
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED2;
+	GPIOA->OSPEEDR |= GPIO_OSPEEDR_OSPEED3;
+
+	// (b) Both GPIO pins should have a push-pull output type.
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT2;
+	GPIOA->OTYPER &= ~GPIO_OTYPER_OT3;
+
+	// (c) Configure both GPIO pins to use pull-up resistors for I/O.
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD2_0;
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD2_1;
+	GPIOA->PUPDR |= GPIO_PUPDR_PUPD3_0;
+	GPIOA->PUPDR &= ~GPIO_PUPDR_PUPD3_1;
 }
 
 void USART_Init(USART_TypeDef* USARTx) {
-	//TODO
+	//disable USART
+	USARTx->CR1 &= ~USART_CR1_UE; 
+
+	// (a) In the control registers, set word length to 8 bits, oversampling mode to oversample
+	// by 16, and number of stop bits to 1.
+	USARTx->CR1 &= ~USART_CR1_M1; 
+	USARTx->CR1 &= ~USART_CR1_M0; 
+
+	USARTx->CR1 &= ~USART_CR1_OVER8;
+	USARTx->CR2 &= ~USART_CR2_STOP; 
+
+	// (b) Set the baud rate to 9600. To generate the baud rate, you will have to write a value
+	// into USARTx_BRR
+	// USARTx->BRR = 8333; //og
+	USARTx->BRR = 0x208D; //friends code
+
+	// (c) In the control registers, enable both the transmitter and receiver.
+	USARTx->CR1 |= USART_CR1_RE;
+	USARTx->CR1 |= USART_CR1_TE;
+
+	// (d) Now that everything has been set up, enable USART in the control registers.
+	USARTx->CR1 |= USART_CR1_UE; 
 }
 
 uint8_t USART_Read (USART_TypeDef * USARTx) {
