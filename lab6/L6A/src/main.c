@@ -1,11 +1,3 @@
-/*
- * ECE 153B
- *
- * Name(s):
- * Section:
- * Lab: 6A
- */
-
 #include "stm32l476xx.h"
 #include "SysClock.h"
 #include "SysTimer.h"
@@ -27,22 +19,30 @@ int main(void) {
 	SysTick_Init();
 	LED_Init();
 	UART2_Init();
+	UART2_GPIO_Init();
+	USART_Init(USART2);
 	
 	while(1) {
 		LED_Toggle();
+		// initialize CRC
+		Software_ComputedCRC = INITIAL_CRC_VALUE;
+		// start timer
 		startTimer();
-		uint32_t CRCinitial = 0xFFFFFFFF;
 		// compute CRC
-		for (x in DataBuffer) {
-			uint32_t value = CrcSoftwareFunc(CRCinitial, x, 0x04C11DB7);
-			//these lines below were og outside the for loop
-			uint32_t time = endTimer();
-			if (value != uwExpectedCRCValue) {
-				LED_Off();
-				exit;
-			}
-			printf("%u", time);
-			delay(1000);
+		for (int i = 0; i < BUFFER_SIZE; i++) {
+			Software_ComputedCRC = CrcSoftwareFunc(Software_ComputedCRC, DataBuffer[i], POLYNOME);
+		}		
+		// end timer
+		uint32_t timespan = endTimer();
+		// check 
+		if (Software_ComputedCRC != uwExpectedCRCValue) {
+			LED_Off();
+			printf("Program stop...CRC error\n");
+			break;
 		}
+		// print time
+		printf("Execution time: %d us\n", timespan);
+		// delay
+		delay(1000); // 1 sec
 	}
 }

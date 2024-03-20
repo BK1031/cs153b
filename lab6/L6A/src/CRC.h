@@ -1,8 +1,8 @@
 /*
  * ECE 153B
  *
- * Name(s):
- * Section:
+ * Name(s): 
+ * Section: 
  * Lab: 6A
  */
 

@@ -2,7 +2,7 @@
  * ECE 153B
  *
  * Name(s):
- * Section:
+ * Section: 
  * Lab: 6A
  */
  
@@ -19,15 +19,20 @@ uint32_t CrcSoftwareFunc(uint32_t Initial_Crc, uint32_t Input_Data, uint32_t POL
 {
   uint8_t bindex = 0;
   uint32_t Crc = 0;
+
+  /* Initial XOR operation with the previous Crc value */
 	Crc = Initial_Crc ^ Input_Data;
-  uint8_t MSB = Crc & 0x80000000; //1 at leftmost bit
-  if (bindex < sizeof(Input_Data)) {
-    If (MSB == 1) {
-      Crc = (Crc << 1) ^ POLY;
-    }
-    Crc = Crc << 1;
-    bindex += 1;
-  }
+
+  /* The CRC algorithm routine */
+	while (bindex < sizeof(Input_Data)*8) {
+		if ((Crc & 0x80000000) == 0x80000000) { // if MSB of Crc = 1
+			Crc = (Crc << 1) ^ POLY;
+		} else {
+			Crc = (Crc << 1);
+		}
+		++bindex;
+	}
+	
   return Crc;
 }
 
