@@ -14,7 +14,46 @@
 //                        I2C GPIO Initialization
 //===============================================================================
 void I2C_GPIO_Init(void) {
-	//TODO
+	// AF4 of PB8 is I2C1_SCL
+	// AF4 of PB9 is I2C1_SDA
+
+	// Enable GPIO B clock
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+
+	// Set PB8 mode to alternative function (10)
+	GPIOB->MODER |= GPIO_MODER_MODE8_1;
+	GPIOB->MODER &= ~GPIO_MODER_MODE8_0;
+	// Set PB9 mode to alternative function (10)
+	GPIOB->MODER |= GPIO_MODER_MODE9_1;
+	GPIOB->MODER &= ~GPIO_MODER_MODE9_0;
+	
+	// Set PB8 alternative function to AF4 (0100) (I2C1_SCL)
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL8_3;
+	GPIOB->AFR[1] |= GPIO_AFRH_AFSEL8_2;
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL8_1;
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL8_0;
+	// Set PB9 alternative function to AF4 (0100) (I2C1_SDA)
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL9_3;
+	GPIOB->AFR[1] |= GPIO_AFRH_AFSEL9_2;
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL9_1;
+	GPIOB->AFR[1] &= ~GPIO_AFRH_AFSEL9_0;
+	
+	// Set PB8 I/O output speed to high speed (11)
+	GPIOB->OSPEEDR |= GPIO_OSPEEDR_OSPEED8;
+	// Set PB9 I/O output speed to high speed (11)
+	GPIOB->OSPEEDR |= GPIO_OSPEEDR_OSPEED9;
+	
+	// Set PB8 output type to open-drain (1)
+	GPIOB->OTYPER |= GPIO_OTYPER_OT8;
+	// Set PB9 output type to open-drain (1)
+	GPIOB->OTYPER |= GPIO_OTYPER_OT9;
+	
+	// Set PB8 PUPD to pull-up (01)
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD8_1;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD8_0;
+	// Set PB9 PUPD to pull-up (01)
+	GPIOB->PUPDR &= ~GPIO_PUPDR_PUPD9_1;
+	GPIOB->PUPDR |= GPIO_PUPDR_PUPD9_0;
 }
 	
 #define I2C_TIMINGR_PRESC_POS	28
@@ -28,7 +67,85 @@ void I2C_GPIO_Init(void) {
 //===============================================================================
 void I2C_Initialization(void){
 	uint32_t const OwnAddr = 0x52;
-	//TODO
+	
+	// I2C1 clock enable
+	RCC->APB1ENR1 |= RCC_APB1ENR1_I2C1EN;
+	
+	// Set I2C1 clock source to system clock (01)
+	RCC->CCIPR &= ~RCC_CCIPR_I2C1SEL_1;
+	RCC->CCIPR |= RCC_CCIPR_I2C1SEL_0;
+	
+	// I2C1 reset
+	RCC->APB1RSTR1 |= RCC_APB1RSTR1_I2C1RST;
+	RCC->APB1RSTR1 &= ~RCC_APB1RSTR1_I2C1RST;
+	
+	// I2C1 peripheral disable
+	I2C1->CR1 &= ~I2C_CR1_PE;
+	
+	// Enable analog noise filter (0)
+	I2C1->CR1 &= ~I2C_CR1_ANFOFF;
+	
+	// Disable digital noise filter (0000)
+	I2C1->CR1 &= ~I2C_CR1_DNF;
+	
+	// Enable error interrupts (1)
+	I2C1->CR1 |= I2C_CR1_ERRIE;
+	
+	// Enable clock stretching (0)
+	I2C1->CR1 &= ~I2C_CR1_NOSTRETCH;
+	
+	// Master operate in 7-bit addressing mode (0)
+	I2C1->CR2 &= ~I2C_CR2_ADD10;
+	
+	// Enable automatic end mode (master mode) (1)
+	I2C1->CR2 |= I2C_CR2_AUTOEND;
+	
+	// Enable NACK generation (slave mode) (1)
+	I2C1->CR2 |= I2C_CR2_NACK;
+	
+	// PRESC = 7
+	// f_PRESC = f_I2CCLK/(PRESC+1) = 80 MHz/(7+1) = 10 MHz
+	// t_PRESC = 0.1 us
+	I2C1->TIMINGR &= ~I2C_TIMINGR_PRESC;
+	I2C1->TIMINGR |= 7 << I2C_TIMINGR_PRESC_POS;
+	
+	// SCLDEL = 9
+	// t_SCLDEL = (SCLDEL+1)*t_PRESC >= 1 us
+	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLDEL;
+	I2C1->TIMINGR |= 9 << I2C_TIMINGR_SCLDEL_POS;
+	
+	// SDADEL = 12
+	// t_SDADEL = (SDADEL+1)*t_PRESC >= 1.25 us
+	I2C1->TIMINGR &= ~I2C_TIMINGR_SDADEL;
+	I2C1->TIMINGR |= 12 << I2C_TIMINGR_SDADEL_POS;
+	
+	// SCLH = 39
+	// t_SCLH = (SCLH+1)*t_PRESC >= 4 us
+	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLH;
+	I2C1->TIMINGR |= 39 << I2C_TIMINGR_SCLH_POS;
+	
+	// SCLL = 46
+	// t_SCLL = (SCLL+1)*t_PRESC >= 4.7 us
+	I2C1->TIMINGR &= ~I2C_TIMINGR_SCLL;
+	I2C1->TIMINGR |= 46 << I2C_TIMINGR_SCLL_POS;
+	
+	// Own address 2 disable
+	I2C1->OAR2 &= ~I2C_OAR2_OA2EN;
+	
+	// Own address 1 disable
+	I2C1->OAR1 &= ~I2C_OAR1_OA1EN;
+	
+	// Own address 1 is a 7-bit address (0)
+	I2C1->OAR1 &= ~I2C_OAR1_OA1MODE;
+	
+	// Set Own address 1
+	I2C1->OAR1 |= OwnAddr << 1;
+	
+	// Own address 1 enable
+	I2C1->OAR1 |= I2C_OAR1_OA1EN;
+	
+	// I2C1 peripheral enable
+	I2C1->CR1 |= I2C_CR1_PE;
 }
 
 //===============================================================================
