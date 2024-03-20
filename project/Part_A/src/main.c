@@ -1,8 +1,8 @@
 /*
  * ECE 153B
  *
- * Name(s):
- * Section:
+ * Name(s): 
+ * Section: 
  * Project
  */
 
@@ -13,31 +13,36 @@
 #include "motor.h"
 #include <stdio.h>
 
+void Init_USARTx(int x);
+
+
 int main(void) {
 	char ch;
 	// Switch System Clock = 80 MHz
-	System_Clock_Init(); 
-	Motor_Init();
+	System_Clock_Init();
 	SysTick_Init();
-	UART2_GPIO_Init();
 	UART2_Init();
+	UART2_GPIO_Init();
 	USART_Init(USART2);
+	Motor_Init();
 	
-	printf("Program Starts.\r\n");
-	char rxByte = '\0';
+	printf("Program start...\n");
+	printf("L for ccw, R for cw, 0 for stop\r\n");
 	while(1) {
-		scanf("%c", &rxByte);
-        if (rxByte == '1') {
-            setDire(1);
-			rotate();
-            printf("Clockwise");
-        } else if (rxByte == '2') {
-            setDire(2);
-			rotate();
-            printf("CounterClockwise");
-        } else {
+		scanf("%c", &ch);
+		// printf("Your input: %c\n", rxByte);
+		
+		if ((ch == 'l') || (ch == 'L')) {
+			setDire(-1);
+			printf("Motor status: ccw\n");
+		} else if ((ch == 'r') || (ch == 'R')) {
+			setDire(1);
+			printf("Motor status: cw\n");
+		} else if (ch == '0') {
 			setDire(0);
-            printf("Stopped");
+			printf("Motor status: stopped\n");
+		} else {
+			printf("Invalid command - try again\n");
 		}
-}
+	}
 }

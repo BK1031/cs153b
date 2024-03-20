@@ -1,122 +1,98 @@
 /*
  * ECE 153B
  *
- * Name(s):
- * Section:
+ * Name(s): 
+ * Section: 
  * Project
  */
 
 #include "stm32l476xx.h"
 #include "motor.h"
 
-static const uint32_t MASK = ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);//cleras all motor pin bits
-static uint32_t HalfStep[8] = {0x100,0x120,0x20,0xA0,0x80,0x90,0x10,0x110};//cw direction
 
-static volatile int8_t dire = 0;
+static const uint32_t MASK = GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9;
+static const uint32_t HalfStep[8] = {
+	GPIO_ODR_OD5 | GPIO_ODR_OD9, // 1001
+	GPIO_ODR_OD5, // 1000
+	GPIO_ODR_OD5 | GPIO_ODR_OD8, // 1010
+	GPIO_ODR_OD8, // 0010
+	GPIO_ODR_OD6 | GPIO_ODR_OD8, // 0110
+	GPIO_ODR_OD6, // 0100
+	GPIO_ODR_OD6 | GPIO_ODR_OD9, // 0101
+	GPIO_ODR_OD9, // 0001
+};
+
+static volatile int8_t dire = 0; // -1 for ccw, 0 for stop, 1 for cw
 static volatile uint8_t step = 0;
 
-void Motor_Init(void) {	
-// Enable HSI
-    RCC->CR |= ((uint32_t)RCC_CR_HSION);
-    while ( (RCC->CR & (uint32_t) RCC_CR_HSIRDY) == 0 );
-
-    // Select HSI as system clock source
-    RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
-    RCC->CFGR |= (uint32_t)RCC_CFGR_SW_HSI;
-    while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS) == 0 );
-	//enable clock for GPIO port C
-	RCC->AHB2ENR |= (uint32_t) RCC_AHB2ENR_GPIOCEN;
-
-	//configure port c pins 5, 6, 8, 9 as output (01)
-	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE5_0;
-	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE5_1;
-	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE6_0;
-	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE6_1;	
-	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE8_0;
-	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE8_1;
-	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE9_0;
-	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE9_1;	
-
-	//set output speed of pins to fast (10)
-	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED5_0;
-	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED5_1;
-	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED6_0;
-	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED6_1;
-	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED8_0;
-	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED8_1;
-	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED9_0;
-	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED9_1;
-
-	//set output type of pins to push-pull (0, reset)
-	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT5;
-	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT6;
-	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT8;
-	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT9;
+void Motor_Init(void) {
+	// PC5: A
+	// PC6: ~A
+	// PC8: B
+	// PC9: ~B
 	
+	// Enable GPIO Clock of Port C
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+	
+	// Set mode of PC5 to output (01)
+	GPIOC->MODER &= ~GPIO_MODER_MODE5;
+	GPIOC->MODER |= GPIO_MODER_MODE5_0;
+	// Set mode of PC6 to output (01)
+	GPIOC->MODER &= ~GPIO_MODER_MODE6;
+	GPIOC->MODER |= GPIO_MODER_MODE6_0;
+	// Set mode of PC8 to output (01)
+	GPIOC->MODER &= ~GPIO_MODER_MODE8;
+	GPIOC->MODER |= GPIO_MODER_MODE8_0;
+	// Set mode of PC9 to output (01)
+	GPIOC->MODER &= ~GPIO_MODER_MODE9;
+	GPIOC->MODER |= GPIO_MODER_MODE9_0;
+	
+	// Set output speed of PC5 to high speed (10)
+	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED5;
+	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED5_1;
+	// Set output speed of PC6 to high speed (10)
+	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED6;
+	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED6_1;
+	// Set output speed of PC8 to high speed (10)
+	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED8;
+	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED8_1;
+	// Set output speed of PC9 to high speed (10)
+	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED9;
+	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED9_1;
+	
+	// Set output type of PC5 to push-pull (0)
+	GPIOC->OTYPER &= ~GPIO_OTYPER_OT5;
+	// Set output type of PC6 to push-pull (0)
+	GPIOC->OTYPER &= ~GPIO_OTYPER_OT6;
+	// Set output type of PC8 to push-pull (0)
+	GPIOC->OTYPER &= ~GPIO_OTYPER_OT8;
+	// Set output type of PC9 to push-pull (0)
+	GPIOC->OTYPER &= ~GPIO_OTYPER_OT9;
+	
+	// Set PUPD of PC5 to no pull-up/pull-down (00)
+	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD5;
+	// Set PUPD of PC6 to no pull-up/pull-down (00)
+	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD6;
+	// Set PUPD of PC8 to no pull-up/pull-down (00)
+	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD8;
+	// Set PUPD of PC9 to no pull-up/pull-down (00)
+	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD9;
+}
 
-	//set pins to no pull-up, no pull-down (00, reset)
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD5_0;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD5_1;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD6_0;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD6_1;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD8_0;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD8_1;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD9_0;
-	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD9_1;}
-
-
-//halfstep cooresponds with all the state elements
 void rotate(void) {
-	//changes states (8 diff states from the steppign sequence)
-	int i = 0;
-	while (i++ < 7) {
-		GPIO->ODR &= MASK; //clear all bits
-		GPIO->ODR |= HalfStep[i]; //set state
-
-		//STEP 5: ???keep track of sequence with static counter (increment for CW, decrement for CCW)
-		if (dire == 1) {
-			step += 1;
-		}
-		if (dire == -1) {
-			step -= 1;
-		}
-
-		for (int i=0; i < 6000; i++) {} //delay
+	if (dire == -1) { // ccw
+		GPIOC->ODR &= ~MASK;
+		GPIOC->ODR |= HalfStep[step];
+		if (step == 0) step = 7;
+		else --step;
+	} else if (dire == 1) { // cw
+		GPIOC->ODR &= ~MASK;
+		GPIOC->ODR |= HalfStep[step];
+		if (step == 7) step = 0;
+		else ++step;
 	}
 }
 
 void setDire(int8_t direction) {
-	if (direction == 1 ) {
-		//CW - normal array
-		HalfStep[0] = 0x100;
-		HalfStep[1] = 0x120;
-		HalfStep[2] = 0x20;
-		HalfStep[3] = 0xA0;
-		HalfStep[4] = 0x80;
-		HalfStep[5] = 0x90;
-		HalfStep[6] = 0x10;
-		HalfStep[7] = 0x110;
-	}
-	else if (direction == 2) {
-		//CCW - flip array
-		HalfStep[7] = 0x100;
-		HalfStep[6] = 0x120;
-		HalfStep[5] = 0x20;
-		HalfStep[4] = 0xA0;
-		HalfStep[3] = 0x80;
-		HalfStep[2] = 0x90;
-		HalfStep[1] = 0x10;
-		HalfStep[0] = 0x110;
-	}
-	else {
-		//stop - all states are cleared
-		HalfStep[0] = 0x0;
-		HalfStep[1] = 0x0;
-		HalfStep[2] = 0x0;
-		HalfStep[3] = 0x0;
-		HalfStep[4] = 0x0;
-		HalfStep[5] = 0x0;
-		HalfStep[6] = 0x0;
-		HalfStep[7] = 0x0;
-	}
+	dire = direction;
 }

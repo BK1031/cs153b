@@ -9,7 +9,8 @@
 #include "SysTimer.h"
 #include "motor.h"
 
-static uint32_t volatile step;
+static uint32_t volatile msTicks;
+static uint32_t volatile stepperTicks;
 
 void SysTick_Init(void) {
 	// SysTick Control & Status Register
@@ -23,25 +24,29 @@ void SysTick_Init(void) {
 	// 0 = counting down to zero does not assert the SysTick exception request
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
 	
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk; 
 	// Select clock source
 	// If CLKSOURCE = 0, the external clock is used. The frequency of SysTick clock is the frequency of the AHB clock divided by 8.
 	// If CLKSOURCE = 1, the processor clock is used.
 	SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;		
 	
-	// Enable SysTick IRQ and SysTick Timer
 	// Configure and Enable SysTick interrupt in NVIC
 	NVIC_EnableIRQ(SysTick_IRQn);
 	NVIC_SetPriority(SysTick_IRQn, 1); // Set Priority to 1
+
+	// Enable SysTick IRQ and SysTick Timer
+	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
 }
 
 void SysTick_Handler(void) {
 	++msTicks;
-	rotate();
+	++stepperTicks;
+	if (stepperTicks == 2) {
+		rotate();
+		stepperTicks = 0;
+	}
 }
 
 void delay(uint32_t ms) {
-	uint32_t currentTicks;
-	currentTicks = msTicks;
-	while (msTicks != currentTicks + T);
+	uint32_t startTick = msTicks;
+	while (msTicks < startTick + ms);
 }
