@@ -1,98 +1,87 @@
 /*
  * ECE 153B
  *
- * Name(s): 
- * Section: 
+ * Name(s):
+ * Section:
  * Project
  */
 
 #include "stm32l476xx.h"
 #include "motor.h"
 
+static const uint32_t MASK = ~(GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9);//cleras all motor pin bits
+static uint32_t HalfStep[8] = {
+	GPIO_ODR_OD5 | GPIO_ODR_OD9, 
+	GPIO_ODR_OD5, 
+	GPIO_ODR_OD5 | GPIO_ODR_OD8,
+	GPIO_ODR_OD8, 
+	GPIO_ODR_OD6 | GPIO_ODR_OD8,
+	GPIO_ODR_OD6, 
+	GPIO_ODR_OD6 | GPIO_ODR_OD9,
+	GPIO_ODR_OD9 
+	};//ccw direction
 
-static const uint32_t MASK = GPIO_ODR_OD5 | GPIO_ODR_OD6 | GPIO_ODR_OD8 | GPIO_ODR_OD9;
-static const uint32_t HalfStep[8] = {
-	GPIO_ODR_OD5 | GPIO_ODR_OD9, // 1001
-	GPIO_ODR_OD5, // 1000
-	GPIO_ODR_OD5 | GPIO_ODR_OD8, // 1010
-	GPIO_ODR_OD8, // 0010
-	GPIO_ODR_OD6 | GPIO_ODR_OD8, // 0110
-	GPIO_ODR_OD6, // 0100
-	GPIO_ODR_OD6 | GPIO_ODR_OD9, // 0101
-	GPIO_ODR_OD9, // 0001
-};
+static volatile int8_t dire = 0; //either -1 for ccw, 0 for stop, or 1 for cw
+static volatile int8_t step = 0;
 
-static volatile int8_t dire = 0; // -1 for ccw, 0 for stop, 1 for cw
-static volatile uint8_t step = 0;
+void Motor_Init(void) {	
+	//enable clock for GPIO port C
+	RCC->AHB2ENR |= (uint32_t) RCC_AHB2ENR_GPIOCEN;
 
-void Motor_Init(void) {
-	// PC5: A
-	// PC6: ~A
-	// PC8: B
-	// PC9: ~B
-	
-	// Enable GPIO Clock of Port C
-	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
-	
-	// Set mode of PC5 to output (01)
-	GPIOC->MODER &= ~GPIO_MODER_MODE5;
-	GPIOC->MODER |= GPIO_MODER_MODE5_0;
-	// Set mode of PC6 to output (01)
-	GPIOC->MODER &= ~GPIO_MODER_MODE6;
-	GPIOC->MODER |= GPIO_MODER_MODE6_0;
-	// Set mode of PC8 to output (01)
-	GPIOC->MODER &= ~GPIO_MODER_MODE8;
-	GPIOC->MODER |= GPIO_MODER_MODE8_0;
-	// Set mode of PC9 to output (01)
-	GPIOC->MODER &= ~GPIO_MODER_MODE9;
-	GPIOC->MODER |= GPIO_MODER_MODE9_0;
-	
-	// Set output speed of PC5 to high speed (10)
-	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED5;
-	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED5_1;
-	// Set output speed of PC6 to high speed (10)
-	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED6;
-	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED6_1;
-	// Set output speed of PC8 to high speed (10)
-	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED8;
-	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED8_1;
-	// Set output speed of PC9 to high speed (10)
-	GPIOC->OSPEEDR &= ~GPIO_OSPEEDR_OSPEED9;
-	GPIOC->OSPEEDR |= GPIO_OSPEEDR_OSPEED9_1;
-	
-	// Set output type of PC5 to push-pull (0)
-	GPIOC->OTYPER &= ~GPIO_OTYPER_OT5;
-	// Set output type of PC6 to push-pull (0)
-	GPIOC->OTYPER &= ~GPIO_OTYPER_OT6;
-	// Set output type of PC8 to push-pull (0)
-	GPIOC->OTYPER &= ~GPIO_OTYPER_OT8;
-	// Set output type of PC9 to push-pull (0)
-	GPIOC->OTYPER &= ~GPIO_OTYPER_OT9;
-	
-	// Set PUPD of PC5 to no pull-up/pull-down (00)
-	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD5;
-	// Set PUPD of PC6 to no pull-up/pull-down (00)
-	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD6;
-	// Set PUPD of PC8 to no pull-up/pull-down (00)
-	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD8;
-	// Set PUPD of PC9 to no pull-up/pull-down (00)
-	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD9;
-}
+	//configure port c pins 5, 6, 8, 9 as output (01)
+	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE5_0;
+	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE5_1;
+	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE6_0;
+	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE6_1;	
+	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE8_0;
+	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE8_1;
+	GPIOC->MODER |= (uint32_t) GPIO_MODER_MODE9_0;
+	GPIOC->MODER &= ~(uint32_t) GPIO_MODER_MODE9_1;	
 
+	//set output speed of pins to fast (10)
+	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED5_0;
+	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED5_1;
+	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED6_0;
+	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED6_1;
+	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED8_0;
+	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED8_1;
+	GPIOC->OSPEEDR &= ~(uint32_t) GPIO_OSPEEDR_OSPEED9_0;
+	GPIOC->OSPEEDR |= (uint32_t) GPIO_OSPEEDR_OSPEED9_1;
+
+	//set output type of pins to push-pull (0, reset)
+	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT5;
+	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT6;
+	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT8;
+	GPIOC->OTYPER &= ~(uint32_t) GPIO_OTYPER_OT9;
+	
+
+	//set pins to no pull-up, no pull-down (00, reset)
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD5_0;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD5_1;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD6_0;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD6_1;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD8_0;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD8_1;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD9_0;
+	GPIOC->PUPDR &= !(uint32_t) GPIO_PUPDR_PUPD9_1;}
+
+
+//halfstep cooresponds with all the state elements
 void rotate(void) {
-	if (dire == -1) { // ccw
-		GPIOC->ODR &= ~MASK;
-		GPIOC->ODR |= HalfStep[step];
-		if (step == 0) step = 7;
-		else --step;
-	} else if (dire == 1) { // cw
-		GPIOC->ODR &= ~MASK;
-		GPIOC->ODR |= HalfStep[step];
-		if (step == 7) step = 0;
-		else ++step;
+	//changes states (8 diff states from the steppign sequence)
+	if (step > 7) { //CW
+			step = 0;
+	} else if (step < 0) { //CCW
+		step = 7;
 	}
+	GPIOC->ODR &= MASK; //clear all bits
+	GPIOC->ODR |= HalfStep[step]; //set state
+	step += -dire;
 }
 
 void setDire(int8_t direction) {
 	dire = direction;
 }
+	
+
+
