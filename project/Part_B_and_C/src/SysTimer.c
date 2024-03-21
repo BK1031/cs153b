@@ -43,12 +43,6 @@ void SysTick_Init(void) {
 void SysTick_Handler(void) {
 	++msTicks;
 	
-	// Clock for rotateStep()
-	++stepperTicks;
-	if (stepperTicks == 2) {
-		rotateStep();
-		stepperTicks = 0;
-	}
 
 	if (waitEnable)	{
 		waitTicks--;
@@ -57,6 +51,13 @@ void SysTick_Handler(void) {
 		if (waitTicks == 0) {
 			waitEnable = 0;
 			doorBlocked = 0;
+		}
+	} else {
+		// Clock for rotateStep()
+		++stepperTicks;
+		if (stepperTicks == 2) {
+			rotateStep();
+			stepperTicks = 0;
 		}
 	}
 }

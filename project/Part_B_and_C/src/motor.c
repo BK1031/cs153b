@@ -93,7 +93,7 @@ void rotateStep(void) {
 		else --stepIndex;
 		if (doorAccelerometerState == 0) { // if door closed
 			setDire(0);
-			closeDoorDone();
+			openDoorDone();
 		}
 	} else if (dire == 1) { // cw, opening door
 		GPIOC->ODR &= ~MASK;
@@ -102,7 +102,7 @@ void rotateStep(void) {
 		else ++stepIndex;
 		if (doorAccelerometerState == 1) { // if door open
 			setDire(0);
-			openDoorDone();
+			closeDoorDone();
 		}
 	}
 }
@@ -112,5 +112,5 @@ void setDire(int8_t direction) {
 	 * Use this function for continuous motor rotation
 	 * -1 for ccw, 0 for stop, 1 for cw
 	 */
-	dire = direction;
+	dire = -direction;
 }
