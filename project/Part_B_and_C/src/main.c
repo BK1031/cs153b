@@ -45,7 +45,7 @@ static volatile uint8_t prevTemperature;
 static volatile	uint8_t currTemperature;
 
 volatile uint8_t doorState = 0; // 0 for closed, 1 for open, 2 for in between
-volatile uint8_t = 0; // 0 for closed, 1 for open, 2 for in between
+volatile uint8_t doorAccelerometerState = 0; // 0 for closed, 1 for open, 2 for in between
 volatile uint8_t doorBlocked = 0; // 1 if door is blocked, 0 otherwise
 
 int main(void) {
