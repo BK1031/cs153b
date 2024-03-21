@@ -46,7 +46,7 @@ static volatile	uint8_t currTemperature;
 
 volatile uint8_t doorState = 0; // 0 for closed, 1 for open, 2 for in between
 volatile uint8_t = 0; // 0 for closed, 1 for open, 2 for in between
-volatile bool doorBlocked = 0; // 1 if door is blocked, 0 otherwise
+volatile uint8_t doorBlocked = 0; // 1 if door is blocked, 0 otherwise
 
 int main(void) {
 	System_Clock_Init(); // Switch System Clock = 80 MHz
@@ -106,21 +106,21 @@ int main(void) {
 	}
 }
 
-void openDoor(bool consoleOverride) {
+void openDoor(uint8_t consoleOverride) {
 	doorState = 1;
-	if (!consoleOverride) {
+	if (consoleOverride == 0) {
 		sprintf(buffer, "Temperature too high! Opening door...\n");
 		UART_print(buffer);
-	} else if{
+	} else {
 		sprintf(buffer, "Console override! Opening door...\n");
 		UART_print(buffer);
 	}	
 	setDire(1);
 }
 
-void closeDoor(bool consoleOverride) {
+void closeDoor(uint8_t consoleOverride) {
 	doorState = 0;
-	if (!consoleOverride) {
+	if (consoleOverride == 0) {
 		sprintf(buffer, "Temperature too low! Closing door...\n");
 		UART_print(buffer);
 	} else {

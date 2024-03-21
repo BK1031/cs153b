@@ -12,6 +12,6 @@ void closeDoorDone(void);
 
 extern volatile uint8_t doorState;
 extern volatile uint8_t doorAccelerometerState;
-extern volatile bool doorBlocked;
+extern volatile uint8_t doorBlocked;
 
 #endif /* __STM32L476G_DISCOVERY_MOTOR_H */
