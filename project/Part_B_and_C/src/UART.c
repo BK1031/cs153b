@@ -21,10 +21,6 @@ static volatile uint8_t * active;
 static volatile uint8_t * pending[BUFFER_SIZE-1];
 static volatile uint8_t pending_size[BUFFER_SIZE-1] = {0};
 
-/*****************************************************************************/
-/*                             Initializations                               */
-/*****************************************************************************/
-
 void UART1_Init(void) {
 	// Enable USART1 clock
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -187,10 +183,6 @@ void USART_Init(USART_TypeDef * USARTx) {
 	}
 }
 
-/*****************************************************************************/
-/*                              TX functions                                 */
-/*****************************************************************************/
-
 void UART_print(char* str) {
 	/*
 	 * Transmit string through UART
@@ -240,10 +232,6 @@ void DMA_USART_TX(void) {
 	DMA1_Channelx->CCR |= DMA_CCR_EN;
 }
 
-/*****************************************************************************/
-/*                              RX functions                                 */
-/*****************************************************************************/
-
 void Accumulate_USART_RX(char ch) {
 	/*
 	 * Accumulate chars received by USARTx_RDR register
@@ -260,10 +248,6 @@ void Accumulate_USART_RX(char ch) {
 		input_size = 0;
 	}
 }
-
-/*****************************************************************************/
-/*                              IRQ handlers                                 */
-/*****************************************************************************/
 
 void USART1_IRQHandler(void){
 	// For RX, RXNE = 1 if RDR register receives a char

@@ -48,22 +48,15 @@ void SysTick_Handler(void) {
 	if (stepperTicks == 2) {
 		rotateStep();
 		stepperTicks = 0;
-		
-//		// Stop condition for rotateDegrees()
-//		if (get_nStepsEnable() && get_nSteps() == 0) {
-//			setDire(0);
-//			set_nStepsEnable(0);
-//		}
 	}
-	
-	// Counter for wait()
+
 	if (waitEnable)	{
 		waitTicks--;
 		
 		// Stop condition for wait()
 		if (waitTicks == 0) {
 			waitEnable = 0;
-			waitDone();
+			doorBlocked = 0;
 		}
 	}
 }

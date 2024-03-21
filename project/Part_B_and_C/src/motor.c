@@ -25,12 +25,6 @@ static const uint32_t HalfStep[8] = {
 
 static volatile int8_t dire = 0; // -1 for ccw, 0 for stop, 1 for cw
 static volatile uint8_t stepIndex = 0;
-//static volatile uint32_t nSteps = 0; // counter for rotateDegrees()
-//static volatile uint8_t nStepsEnable = 0; // counter enable for rotateDegrees()
-
-/*****************************************************************************/
-/*                             Initializations                               */
-/*****************************************************************************/
 
 void Motor_Init(void) {
 	// PC5: A
@@ -86,10 +80,6 @@ void Motor_Init(void) {
 	GPIOC->PUPDR &= ~GPIO_PUPDR_PUPD9;
 }
 
-/*****************************************************************************/
-/*                         Motor rotate functions                            */
-/*****************************************************************************/
-
 void rotateStep(void) {
 	/*
 	 * Perform one half step in stepper motor
@@ -101,7 +91,7 @@ void rotateStep(void) {
 		GPIOC->ODR |= HalfStep[stepIndex];
 		if (stepIndex == 0) stepIndex = 7;
 		else --stepIndex;
-		if (getDoorActual() == 1) { // if door closed
+		if (doorAccelerometerState == 0) { // if door closed
 			setDire(0);
 			closeDoorDone();
 		}
@@ -110,16 +100,11 @@ void rotateStep(void) {
 		GPIOC->ODR |= HalfStep[stepIndex];
 		if (stepIndex == 7) stepIndex = 0;
 		else ++stepIndex;
-		if (getDoorActual() == 0) { // if door open
+		if (doorAccelerometerState == 1) { // if door open
 			setDire(0);
 			openDoorDone();
 		}
 	}
-	
-	// Step counter for rotateDegrees()
-//	if (nStepsEnable && dire != 0) {
-//		--nSteps;
-//	}
 }
 
 void setDire(int8_t direction) {
@@ -127,35 +112,5 @@ void setDire(int8_t direction) {
 	 * Use this function for continuous motor rotation
 	 * -1 for ccw, 0 for stop, 1 for cw
 	 */
-	
 	dire = direction;
 }
-
-//void rotateDegrees(int32_t deg) {
-//	/*
-//	 * Use this function to rotate motor by deg degrees
-//	 * Positive value for cw, negative value for ccw, 0 for no rotation
-//	 */
-//	
-//	if (deg == 0) return;
-//	
-//	nSteps = round(4096.0 * abs(deg) / 360);
-//	nStepsEnable = 1;
-//	setDire((deg > 0) - (deg < 0)); // auto extract sign from deg
-//}
-
-/*****************************************************************************/
-/*                Variable getters/setters for rotateDegrees()               */
-/*****************************************************************************/
-
-//uint32_t get_nSteps(void) {
-//	return nSteps;
-//}
-
-//uint8_t get_nStepsEnable(void) {
-//	return nStepsEnable;
-//}
-
-//void set_nStepsEnable(uint8_t en) {
-//	nStepsEnable = en;
-//}

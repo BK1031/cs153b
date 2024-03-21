@@ -40,21 +40,13 @@
 #define TEMP_HIGH_THRESHOLD 27 // Celsius
 #define TEMP_LOW_THRESHOLD 23 // Celsius
 
-typedef enum DoorState {
-  OPEN,
-	CLOSED,
-	CLOPEN
-} DoorState;
-
 static char buffer[IO_SIZE];
 static volatile uint8_t prevTemperature;
-static volatile	uint8_t currTemperature; // measured by TC74 temperature sensor through I2C
-static volatile DoorState doorExpected = CLOSED;
-static volatile DoorState doorActual = CLOPEN;
-static volatile uint8_t cmdOverride = 0; // 1 for three seconds after door opened/closed thru console command, 0 otherwise
+static volatile	uint8_t currTemperature;
 
-void openDoor(uint8_t openID);
-void closeDoor(uint8_t closeID);
+volatile uint8_t doorState = 0; // 0 for closed, 1 for open, 2 for in between
+volatile uint8_t = 0; // 0 for closed, 1 for open, 2 for in between
+volatile bool doorBlocked = 0; // 1 if door is blocked, 0 otherwise
 
 int main(void) {
 	System_Clock_Init(); // Switch System Clock = 80 MHz
@@ -92,20 +84,20 @@ int main(void) {
 		// Ping accelerometer, update doorActual
 		readValues(&x, &y, &z);
 		if (-1.25 <= y && y <= -0.75 && -0.25 <= z && z <= 0.25) { 
-			doorActual = CLOSED;
+			doorAccelerometerState = 0;
 		} else if (-0.25 <= y && y <= 0.25 && 0.75 <= z && z <= 1.25) { 
-			doorActual = OPEN;
+			doorAccelerometerState = 1;
 		} else {
-			doorActual = CLOPEN;
+			doorAccelerometerState = 2;
 		}
-//		sprintf(buffer, "doorActual: %d\n", doorActual);
-//		UART_print(buffer);
-//		sprintf(buffer, "Acceleration: %.2f, %.2f, %.2f\r\n", x, y, z);
-//		UART_print(buffer);
+		sprintf(buffer, "doorAccelerometerState: %d\n", doorAccelerometerState);
+		UART_print(buffer);
+		sprintf(buffer, "Acceleration: %.2f, %.2f, %.2f\r\n", x, y, z);
+		UART_print(buffer);
 
-		if ((doorExpected == CLOSED) && (currTemperature >= TEMP_HIGH_THRESHOLD) && !cmdOverride) {
+		if (!doorBlocked && doorState == 0 && currTemperature >= TEMP_HIGH_THRESHOLD) {
 			openDoor(0);
-		} else if ((doorExpected == OPEN) && (currTemperature <= TEMP_LOW_THRESHOLD) && !cmdOverride) {
+		} else if (!doorBlocked && doorState == 1 && currTemperature <= TEMP_LOW_THRESHOLD) {
 			closeDoor(0);
 		}
 
@@ -114,74 +106,45 @@ int main(void) {
 	}
 }
 
-/*****************************************************************************/
-/*                        Door actuation functions                           */
-/*****************************************************************************/
-
-void openDoor(uint8_t openID) {
-	/*
-	 * openID = 0: Door opened automatically through temperature trigger
-	 * openID = 1: Door opened manually through /open command
-	 */
-	
-	doorExpected = OPEN;
-	
-	if (openID == 0) {
-		sprintf(buffer, "High temperature detected - Opening door...\n");
+void openDoor(bool consoleOverride) {
+	doorState = 1;
+	if (!consoleOverride) {
+		sprintf(buffer, "Temperature too high! Opening door...\n");
 		UART_print(buffer);
-	} else if (openID == 1) {
-		sprintf(buffer, "Force opening door...\n");
+	} else if{
+		sprintf(buffer, "Console override! Opening door...\n");
 		UART_print(buffer);
-	}
-	
+	}	
 	setDire(1);
 }
 
-void closeDoor(uint8_t closeID) {
-	/*
-	 * closeID = 0: Door closed automatically through temperature trigger
-	 * closeID = 1: Door closed manually through /close command
-	 */
-	
-	doorExpected = CLOSED;
-	
-	if (closeID == 0) {
-		sprintf(buffer, "Low temperature detected - Closing door...\n");
+void closeDoor(bool consoleOverride) {
+	doorState = 0;
+	if (!consoleOverride) {
+		sprintf(buffer, "Temperature too low! Closing door...\n");
 		UART_print(buffer);
-	} else if (closeID == 1) {
-		sprintf(buffer, "Force closing door...\n");
+	} else {
+		sprintf(buffer, "Console override! Closing door...\n");
 		UART_print(buffer);
 	}
-	
 	setDire(-1);
 }
 
-/*****************************************************************************/
-/*             Function definitions required to be in "main.c"               */
-/*****************************************************************************/
-
 void UART_onInput(char* inputs, uint32_t size) {
-	/*
-	 * Perform action based on input string
-	 * NOTE: last char of inputs is '\n'
-	 */
-	
-	// Echo
 	sprintf(buffer, "Your input: %s", inputs);
 	UART_print(buffer);
 	
-	// Do something
-	if (!strcmp(inputs, "/open\n")) { // Command is "/open"
-		cmdOverride = 1;
+	if (!strcmp(inputs, "open\n")) { // Command is "/open"
+		doorBlocked = 1;
 		openDoor(1);
-	} else if (!strcmp(inputs, "/close\n")) { // Command is "/close"
-		cmdOverride = 1;
+	} else if (!strcmp(inputs, "close\n")) { // Command is "/close"
+		doorBlocked = 1;
 		closeDoor(1);
-	} else if (!strcmp(inputs, "/temp high\n")) { // Command is "/temp high"
+	} else if (!strcmp(inputs, "high\n")) { // Command is "/temp high"
 		currTemperature = TEMP_HIGH_THRESHOLD;
 		sprintf(buffer, "Temperature set to %d\n", currTemperature);
 		UART_print(buffer);
-	} else if (!strcmp(inputs, "/temp low\n")) { // Command is "/temp low"
+	} else if (!strcmp(inputs, "low\n")) { // Command is "/temp low"
 		currTemperature = TEMP_LOW_THRESHOLD;
 		sprintf(buffer, "Temperature set to %d\n", currTemperature);
 		UART_print(buffer);
@@ -192,14 +155,6 @@ void UART_onInput(char* inputs, uint32_t size) {
 	
 	// Clear input buffer
 	memset(inputs, 0, size);
-}
-
-void waitDone(void) {
-	cmdOverride = 0;
-}
-
-uint8_t getDoorActual(void) {
-	return doorActual;
 }
 
 void openDoorDone(void) {
