@@ -1,8 +1,8 @@
 /*
  * ECE 153B
  *
- * Name(s): 
- * Section: 
+ * Name(s):
+ * Section:
  * Project
  */
 
@@ -13,36 +13,35 @@
 #include "motor.h"
 #include <stdio.h>
 
-void Init_USARTx(int x);
-
-
 int main(void) {
 	char ch;
 	// Switch System Clock = 80 MHz
-	System_Clock_Init();
-	SysTick_Init();
-	UART2_Init();
-	UART2_GPIO_Init();
-	USART_Init(USART2);
+	System_Clock_Init(); 
+
 	Motor_Init();
+	setDire(0);
+	SysTick_Init();
+	UART2_GPIO_Init();
+	UART2_Init();
+	USART_Init(USART2);
 	
-	printf("Program start...\n");
-	printf("L for ccw, R for cw, 0 for stop\r\n");
+	
+printf("Program Starts.\r\n");
 	while(1) {
+		printf("Enter 1 for clockwise, 2 for counterclockwise, or 3 to stop");
 		scanf("%c", &ch);
-		// printf("Your input: %c\n", rxByte);
-		
-		if ((ch == 'l') || (ch == 'L')) {
-			setDire(-1);
-			printf("Motor status: ccw\n");
-		} else if ((ch == 'r') || (ch == 'R')) {
-			setDire(1);
-			printf("Motor status: cw\n");
-		} else if (ch == '0') {
-			setDire(0);
-			printf("Motor status: stopped\n");
+		if (ch == '1') {
+			setDire((int8_t) 1);
+			printf("Rotating Clockwise\n");
+		} else if (ch == '2') {
+			setDire((int8_t) -1);
+			printf("Rotating Counterclockwise\n");
+		} else if (ch == '3') {
+			setDire((int8_t) 0);
+			printf("Stop Rotating\n");
 		} else {
-			printf("Invalid command - try again\n");
+			printf("Invalid char\n");
 		}
-	}
 }
+}
+
